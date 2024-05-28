@@ -1,6 +1,9 @@
 const express = require("express");
 const app = express();
 app.use(express.json());
+const cors = require("cors");
+app.use(cors());
+
 
 const {User} = require("./Database");
 const jwt = require("jsonwebtoken");
@@ -12,8 +15,6 @@ const rootRouter = require("./Routes/index");
 app.use("/api/v1", rootRouter);
 
 
-const cors = require("cors");
-app.use(cors());
 
 
 
