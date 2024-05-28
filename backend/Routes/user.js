@@ -123,12 +123,50 @@ router.put("/update",authMiddleware, async(req,res)=>{
             message: "Updated successfully"
         })
     }
-    catch{
+    catch(error){
         res.status(411).send({
             message: "Error while updating information"
         })
     }
-    
-
 })
+
+//router to get users from backend
+router.get("/bulk", async(req,res)=>{
+    try {
+        // Retrieve the filter query parameter from the request
+        let filter = req.query.filter;
+
+        // Use the filter to find users whose firstName or lastName matches the regex pattern
+        let users = await User.find({
+            $or: [
+                { firstName: { "$regex": filter, "$options": "i" } },
+                { lastName: { "$regex": filter, "$options": "i" } }
+            ]
+        });
+
+        // Initialize an empty array to store user details
+        let userDetails = [];
+
+        // Loop through the found users and format their details
+        users.forEach((user) => {
+            let p = {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                _id: user._id // Use MongoDB's default _id field
+            };
+            userDetails.push(p);
+        });
+
+        // Send the formatted user details in the response with a status code of 200
+        res.status(200).send({
+            users: userDetails
+        });
+    } catch (error) {
+        // Handle any errors that occur during the database query
+        res.status(500).send({
+            message: 'An error occurred while fetching users',
+            error: error.message
+        });
+    }
+});
 module.exports = router;
