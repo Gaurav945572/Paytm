@@ -7,6 +7,8 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const jwtPassword = require("../config")
 
+const {authMiddleware}  = require("../MiddleWare/middleware.js")
+
 //sign up
 router.post("/signup",async(req,res)=>{
     let userName = req.body.username;
@@ -74,4 +76,59 @@ router.get("/signin" ,async(req,res)=>{
     }
 })
 
+
+
+//update
+router.put("/update",authMiddleware, async(req,res)=>{
+    let userID = req.userID;
+    let updateFirstName = req.body.firstName;
+    let updateLastName = req.body.lastName;
+    let updatePassword = req.body.password;
+     //input validation
+    if(updateFirstName.length!=0){
+        let parsedFirstName = UserZod.safeParse({updateFirstName});
+        if(!parsedFirstName.success){
+            res.status(411).send({
+                message: "Error while updating information"
+            })
+        }
+    }
+    if(updateLastName.length!=0){
+        let parsedLastName = UserZod.safeParse({updateLastName});
+        if(!parsedLastName.success){
+            res.status(411).send({
+                message: "Error while updating information"
+            })
+        }
+    }
+    if(updatePassword.length!=0){
+        let parsedPassword  = UserZod.safeparse({updatePassword});
+        if(!parsedPassword.success){
+            res.status(411).send({
+                message: "Error while updating information"
+            })
+        }
+    }
+   
+    try{
+        let user =await User.find({userID});
+        user.updateOne({},{
+            $set:{
+                firstName : (updateFirstName.length!=0) ?updateFirstName: firstName ,
+                lastName :( updateLastName.length!=0) ? updateLastName :lastName,
+                password:(updatePassword.length()!=0) ? updatePassword : password
+            }
+        })
+        res.status(200).send({
+            message: "Updated successfully"
+        })
+    }
+    catch{
+        res.status(411).send({
+            message: "Error while updating information"
+        })
+    }
+    
+
+})
 module.exports = router;
