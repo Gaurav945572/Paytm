@@ -3,19 +3,20 @@ const {User,Account} = require("../Database/index");
 
 const {UserZod} = require("../Zod/index.js")
 const {SignInBody} = require("../Zod/SignInBody.js")
+const {updateBody} = require("../Zod/update.js")
 
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const {jwtPassword} = require("../config")
 
-const {authMiddleware}  = require("../MiddleWare/middleware.js")
+const {UserMiddleware}  = require("../MiddleWare/middleware.js")
 
 //sign up
 router.post("/signup", async (req, res) => {
     const { success } = UserZod.safeParse(req.body)
     if (!success) {
         return res.status(411).json({
-            message: "Email already taken / Incorrect inputs"
+            message: "Incorrect inputs"
         })
     }
 
@@ -25,7 +26,7 @@ router.post("/signup", async (req, res) => {
 
     if (existingUser) {
         return res.status(411).json({
-            message: "Email already taken/Incorrect inputs"
+            message: "Email already taken"
         })
     }
 
@@ -35,14 +36,10 @@ router.post("/signup", async (req, res) => {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
     })
-    const userId = user._id;
-    const token = jwt.sign({
-        userId
-    }, jwtPassword);
-
+    const token = jwt.sign({userId:user._id}, jwtPassword);
     /// ----- Create new account ------
     await Account.create({
-        userId:userId,
+        userId:user._id,
         balance: 1 + Math.random() * 10000
     })
     /// -----  ------
@@ -57,15 +54,16 @@ router.post("/signup", async (req, res) => {
 
 //sign in
 router.get("/signin" ,async(req,res)=>{
-    let userName = req.body.username;
+    let userName = req.body.userName;
     let password = req.body.password;
     let parsedInput = SignInBody.safeParse({userName,password});
     if(parsedInput.success){
         let user =await  User.find({userName,password});
-        if(user.length !=0){
-            const token = jwt.sign({userName},jwtPassword);
+        if(user){
+            const token = jwt.sign({userId:user._id},jwtPassword);
             res.status(200).json({
                "token":token,
+               "payload":jwt.verify(token,jwtPassword).userId
             })
         }
         else{
@@ -85,56 +83,28 @@ router.get("/signin" ,async(req,res)=>{
 
 
 //update
-router.put("/update",authMiddleware, async(req,res)=>{
-    let userID = req.userID;
-    let updateFirstName = req.body.firstName;
-    let updateLastName = req.body.lastName;
-    let updatePassword = req.body.password;
-     //input validation
-    if(updateFirstName.length!=0){
-        let parsedFirstName = UserZod.safeParse({updateFirstName});
-        if(!parsedFirstName.success){
-            res.status(411).send({
-                message: "Error while updating information"
-            })
-        }
+router.put("/update",UserMiddleware, async(req,res)=>{
+    const parsedInput = updateBody.safeParse(req.body);
+    if (!parsedInput.success) {
+        return res.status(400).json({
+            message: "Error while updating information",
+        });
     }
-    if(updateLastName.length!=0){
-        let parsedLastName = UserZod.safeParse({updateLastName});
-        if(!parsedLastName.success){
-            res.status(411).send({
-                message: "Error while updating information"
-            })
-        }
-    }
-    if(updatePassword.length!=0){
-        let parsedPassword  = UserZod.safeparse({updatePassword});
-        if(!parsedPassword.success){
-            res.status(411).send({
-                message: "Error while updating information"
-            })
-        }
-    }
-   
-    try{
-        let user =await User.find({userID});
-        user.updateOne({},{
-            $set:{
-                firstName : (updateFirstName.length!=0) ?updateFirstName: firstName ,
-                lastName :( updateLastName.length!=0) ? updateLastName :lastName,
-                password:(updatePassword.length()!=0) ? updatePassword : password
-            }
-        })
-        res.status(200).send({
-            message: "Updated successfully"
-        })
-    }
-    catch(error){
-        res.status(411).send({
-            message: "Error while updating information"
-        })
+
+    try {
+        let user=await User.updateOne({ _id: req.userId }, req.body);
+        res.status(200).json({
+            message: "Updated successfully",
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error while updating information",
+            error: error.message,
+        });
     }
 })
+
+
 
 //router to get users from backend
 router.get("/bulk", async(req,res)=>{

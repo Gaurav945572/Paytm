@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         maxLength: 50
-    },
+    }
 });
 
 const AccountSchema= new mongoose.Schema({

@@ -1,25 +1,35 @@
-const jwtPassword = require("../config")
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const { jwtPassword } = require("../config");
 
-const authMiddleware = (req, res, next) => {
+function UserMiddleware(req, res, next) {
+    // Check if the authorization header is present
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(403).json({});
+    if (!authHeader) {
+        return res.status(401).json({
+            message: "Authorization header is missing",
+        });
     }
 
-    const token = authHeader.split(' ')[1];
+    // Split the token from the 'Bearer' scheme
+    const [bearer, token] = authHeader.split(" ");
+    if (bearer !== "Bearer" || !token) {
+        return res.status(401).json({
+            message: "Malformed authorization header",
+        });
+    }
+
     try {
+        // Verify the JWT token
         const decoded = jwt.verify(token, jwtPassword);
-
-        req.userId = decoded.userId; //this will send to next function
-      
+        console.log(decoded.userId);
+        req.userId = decoded.userId;
         next();
-    } catch (err) {
-        return res.status(403).json({});
+    } catch (error) {
+        res.status(401).json({
+            message: "Token verification failed",
+            error: error.message,
+        });
     }
-};
-
-module.exports = {
-    authMiddleware
 }
+
+module.exports = { UserMiddleware };

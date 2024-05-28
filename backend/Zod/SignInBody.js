@@ -5,4 +5,4 @@ const SignInBody = zod.object({
     password: zod.string()
 })
 
-exports.module = SignInBody;
+module.exports = { SignInBody }; 
