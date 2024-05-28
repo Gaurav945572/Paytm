@@ -4,7 +4,7 @@ mongoose.connect("mongodb+srv://gauravopopo9455:Gauravoppo9455@cluster0.dhldjek.
 
 // Create a Schema for Users
 const userSchema = new mongoose.Schema({
-    username: {
+    userName: {
         type: String,
         required: true,
         unique: true,
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         maxLength: 50
-    }
+    },
 });
 
 const AccountSchema= new mongoose.Schema({

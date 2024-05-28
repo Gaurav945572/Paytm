@@ -1,51 +1,57 @@
 const express = require('express');
-const {User} = require("../Database/index");
-const UserZod = require("../Zod/index.js")
-const SignInBody = require("../Zod/SignInBody.js")
+const {User,Account} = require("../Database/index");
+
+const {UserZod} = require("../Zod/index.js")
+const {SignInBody} = require("../Zod/SignInBody.js")
 
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const jwtPassword = require("../config")
+const {jwtPassword} = require("../config")
 
 const {authMiddleware}  = require("../MiddleWare/middleware.js")
 
 //sign up
-router.post("/signup",async(req,res)=>{
-    let userName = req.body.username;
-    const firstName = req.body.firstName;
-    const lastName = req.body.lastName;
-    const password = req.body.password;
-
-    let parsedInput  = UserZod.safeParse({firstName,lastName,password});
-    let user = User.find({userName});
-    if(user.legnth()!=0){
-        res.status(411).send({
-            "message":"Email already taken"
+router.post("/signup", async (req, res) => {
+    const { success } = UserZod.safeParse(req.body)
+    if (!success) {
+        return res.status(411).json({
+            message: "Email already taken / Incorrect inputs"
         })
     }
 
-    if(parsedInput.success){
-        await User.create({
-            userName,
-            firstName,
-            lastName,
-            password
-        })
-        let createdUser = User.find({userName,firstName,lastName,password});
-        let UserID = createdUser._id;
-        const token = jwt.sign({UserID},jwtPassword);
-        res.status(200).json({
-            "message":"User created successfully",
-            "UserId":token
-        })
-    }
-    else{
-        res.status(411).json({
-            "message":"Incorrect inputs"
-        })
-    }
-})
+    const existingUser = await User.findOne({
+        userName: req.body.userName
+    })
 
+    if (existingUser) {
+        return res.status(411).json({
+            message: "Email already taken/Incorrect inputs"
+        })
+    }
+
+    const user = await User.create({
+        userName: req.body.userName,
+        password: req.body.password,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+    })
+    const userId = user._id;
+    const token = jwt.sign({
+        userId
+    }, jwtPassword);
+
+    /// ----- Create new account ------
+    await Account.create({
+        userId:userId,
+        balance: 1 + Math.random() * 10000
+    })
+    /// -----  ------
+
+    res.json({
+        message: "User created successfully",
+        token: token
+    })
+});
 
 
 

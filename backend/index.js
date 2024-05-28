@@ -7,7 +7,7 @@ app.use(cors());
 
 const {User} = require("./Database");
 const jwt = require("jsonwebtoken");
-const jwtPassword = require("/config.js")
+const jwtPassword = require("./config")
 
 
 
@@ -67,6 +67,6 @@ app.post("/update",async(req,res)=>{
 
 
 
-app.listen(3000,{
-    "message":"listening on 3000"
+app.listen(3000,()=>{
+    console.log("Listening on 3000");
 })
