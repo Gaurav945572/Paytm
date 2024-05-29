@@ -1,3 +1,3 @@
 module.exports={
-    jwtPassword:'your-very-secret-key'
+    jwtPassword:'your-jwt-secret'
 }

@@ -9,7 +9,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const {jwtPassword} = require("../config")
 
-const {UserMiddleware}  = require("../MiddleWare/middleware.js")
+const {authMiddleware}  = require("../MiddleWare/middleware.js")
 
 //sign up
 router.post("/signup", async (req, res) => {
@@ -83,7 +83,7 @@ router.get("/signin" ,async(req,res)=>{
 
 
 //update
-router.put("/update",UserMiddleware, async(req,res)=>{
+router.put("/update",authMiddleware, async(req,res)=>{
     const parsedInput = updateBody.safeParse(req.body);
     if (!parsedInput.success) {
         return res.status(400).json({

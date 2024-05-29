@@ -1,35 +1,27 @@
+const { JWT_SECRET } = require("../config");
 const jwt = require("jsonwebtoken");
-const { jwtPassword } = require("../config");
 
-function UserMiddleware(req, res, next) {
-    // Check if the authorization header is present
+const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({
-            message: "Authorization header is missing",
-        });
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(403).json({});
     }
 
-    // Split the token from the 'Bearer' scheme
-    const [bearer, token] = authHeader.split(" ");
-    if (bearer !== "Bearer" || !token) {
-        return res.status(401).json({
-            message: "Malformed authorization header",
-        });
-    }
+    const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
 
-    try {
-        // Verify the JWT token
-        const decoded = jwt.verify(token, jwtPassword);
-        console.log(decoded.userId);
         req.userId = decoded.userId;
-        next();
-    } catch (error) {
-        res.status(401).json({
-            message: "Token verification failed",
-            error: error.message,
-        });
-    }
-}
+        console.log(JWT_SECRET);
 
-module.exports = { UserMiddleware };
+        next();
+    // } catch (err) {
+    //     return res.status(403).json({
+    //         "message":"wrong token"
+    //     });
+    // }
+};
+
+module.exports = {
+    authMiddleware
+}
