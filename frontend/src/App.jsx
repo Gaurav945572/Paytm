@@ -17,7 +17,7 @@ function AppContent() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/send" element={<SendMoney />} />
+        <Route path="/sendmoney" element={<SendMoney />} />
       </Routes>
     </>
   )
